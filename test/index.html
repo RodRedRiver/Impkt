@@ -5628,19 +5628,102 @@
   const MO_CHUNK_MS = 5000;
   const MO_ROWS = 1000;
   const MO_KEEP_BYTES = 1500000;
-  const MO_TAIL_MS = 4000;
-  const MOTION = { rec: null, timer: null, queue: [], busy: false, tail: null };
+  const MO_TAIL_MS = 4000;        // quiet after the last trace before the tail closes
+  const MO_TAIL_MAX_MS = 30000;   // and never longer than this after the recording
+  const MO_RECHECK_MS = 600000;   // a project that took a chunk and kept no traces
+  const MO_LANES = 3;             // chunks in flight at once
+  const MOTION = { rec: null, timer: null, queue: [], busy: false, tail: null,
+                   hold: new Map(), db: null };
 
-  (function moLoad() {
+  /* The outbox lives in IndexedDB. A twelve-minute drill is several megabytes
+     of movement once the traces are in it, and localStorage holds about five
+     for the whole page, so the old budget kept the last three minutes of a
+     drill and quietly lost the rest whenever the tab closed before the upload
+     finished. localStorage stays as the fallback for a browser with no
+     IndexedDB, under the old budget. A chunk leaves the database only when the
+     project has said it is stored, traces and all. */
+  const MO_DB = 'impkt-motion', MO_STORE = 'chunks';
+  function moOpen() {
+    if (!MOTION.db) {
+      MOTION.db = new Promise(resolve => {
+        let req;
+        try { req = indexedDB.open(MO_DB, 1); } catch (err) { resolve(null); return; }
+        req.onupgradeneeded = () => req.result.createObjectStore(MO_STORE, { keyPath: 'id' });
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = req.onblocked = () => resolve(null);
+      });
+    }
+    return MOTION.db;
+  }
+
+  /* One readwrite transaction; true once it has committed, false if there is no
+     database or it failed, which is the caller's cue to fall back. */
+  async function moTx(fn) {
+    const db = await moOpen();
+    if (!db) return false;
+    return new Promise(resolve => {
+      try {
+        const tx = db.transaction(MO_STORE, 'readwrite');
+        fn(tx.objectStore(MO_STORE));
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = tx.onabort = () => resolve(false);
+      } catch (err) { resolve(false); }
+    });
+  }
+
+  async function moAll() {
+    const db = await moOpen();
+    if (!db) return [];
+    return new Promise(resolve => {
+      try {
+        const req = db.transaction(MO_STORE).objectStore(MO_STORE).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch (err) { resolve([]); }
+    });
+  }
+
+  /* Whatever an earlier visit left: the database, and the localStorage outbox
+     of a page from before it, which moves into the database and is cleared
+     only once it is there. Oldest first, so they go in the order they happened. */
+  (async function moLoad() {
+    let legacy = [];
     try {
       const saved = JSON.parse(localStorage.getItem(MO_OUT) || '[]');
-      if (Array.isArray(saved)) MOTION.queue = saved.filter(c => c && c.id);
+      if (Array.isArray(saved)) legacy = saved.filter(c => c && c.id);
     } catch (err) { /* an unreadable outbox is an empty one */ }
+    const stored = await moAll();
+    const have = new Set(MOTION.queue.map(c => c.id));
+    const old = stored.concat(legacy).filter(c => !have.has(c.id) && have.add(c.id));
+    old.sort((a, b) => (a.start - b.start) || (a.n - b.n));
+    MOTION.queue = old.concat(MOTION.queue);
+    if (legacy.length && await moTx(st => legacy.forEach(c => st.put(c)))) {
+      try { localStorage.removeItem(MO_OUT); } catch (err) { /* it goes next time */ }
+    }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); }
+    catch (err) { /* a browser that may evict it is still a browser that keeps it */ }
+    moSend();
   })();
+
+  /* New chunks into the database. Without one, the old way: an hour of chunks
+     in the tab and the newest that fit the budget in localStorage. */
+  async function moStore(list) {
+    if (await moTx(st => list.forEach(c => st.put(c)))) return;
+    if (MOTION.queue.length > 720) MOTION.queue = MOTION.queue.slice(-720);
+    moKeep();
+  }
+
+  /* Stored by the project: out of the tab and out of the database. */
+  async function moDone(doc) {
+    MOTION.queue = MOTION.queue.filter(c => c.id !== doc.id);
+    MOTION.hold.delete(doc.id);
+    if (!(await moTx(st => st.delete(doc.id)))) moKeep();
+  }
 
   /* The newest chunks that fit the budget, so a long spell offline costs the
      oldest movement rather than every write this page makes after the storage
-     fills. The queue itself keeps an hour of chunks for as long as the tab lives. */
+     fills. The whole outbox for a browser with no IndexedDB, and a copy of
+     the newest of it when the page is left. */
   function moKeep() {
     let size = 2, from = MOTION.queue.length;
     while (from > 0) {
@@ -5675,9 +5758,13 @@
     moSend();
     /* The tail: traces of this recording's last punches, still arriving. They
        go into one more chunk of their own, and the streams stay on until then
-       unless the next recording has already claimed them. */
+       unless the next recording has already claimed them. The wrap keeps up to
+       eight traces and each is a couple of hundred packets, so after a busy
+       finish they can take a while: the tail stays open while they keep
+       coming, up to MO_TAIL_MAX_MS. */
     if (MOTION.tail) moTailEnd();
-    MOTION.tail = { r, timer: setTimeout(moTailEnd, MO_TAIL_MS) };
+    MOTION.tail = { r, until: Date.now() + MO_TAIL_MAX_MS,
+                    timer: setTimeout(moTailEnd, MO_TAIL_MS) };
   }
 
   function moTailEnd() {
@@ -5770,6 +5857,11 @@
     r[side].traces.push({ t: Math.round(performance.now() - r.p0), seq: tr.seq,
                           pre: tr.pre, flags: tr.flags, period: tr.period,
                           lost: tr.lost, ver: tr.ver, grav: tr.grav, s: samples });
+    const tl = MOTION.tail;
+    if (tl && r === tl.r) {
+      clearTimeout(tl.timer);
+      tl.timer = setTimeout(moTailEnd, Math.max(0, Math.min(MO_TAIL_MS, tl.until - Date.now())));
+    }
   }
 
   function moHit(side, hit) {
@@ -5787,51 +5879,86 @@
   function moCut(rec) {
     const r = rec || MOTION.rec;
     if (!r) return;
+    const fresh = [];
     for (const side of ['left', 'right']) {
       const b = r[side];
       if (!b.imu.length && !b.ori.length && !b.hits.length && !b.traces.length) continue;
       const w = WRAPS[side];
-      MOTION.queue.push({
+      const c = {
         id: r.ref + side[0].toUpperCase() + r.n, kind: r.kind, ref: r.ref,
         side, n: r.n, start: r.start,
         serial: PILOT ? PILOT.serial : null, gym: PILOT ? PILOT.gym : null,
         fw: w.fw || null, unit: w.ident ? w.ident.unitId : null,
         imu: b.imu, ori: b.ori, hits: b.hits, traces: b.traces
-      });
+      };
+      MOTION.queue.push(c);
+      fresh.push(c);
       r[side] = moSide();
     }
     r.n++;
-    if (MOTION.queue.length > 720) MOTION.queue = MOTION.queue.slice(-720);
-    moKeep();
+    if (fresh.length) moStore(fresh);
   }
 
-  /* Oldest first, one chunk a call. A refusal (400) is dropped, since sending
-     the same chunk again gets the same answer; anything else, a project that
-     has not had the SQL pasted included, leaves it queued for next time. */
+  /* Oldest first, MO_LANES at a time, so a drill's few hundred chunks go in a
+     minute rather than several and are gone before the next drill starts.
+
+     Nothing is dropped. A chunk leaves only when the project says it stored
+     it, and a chunk with traces only when the project says it stored those:
+     the version of motion_put from before firmware 2.22 answers ok and keeps
+     none, so dropping on that answer loses every trace sent to a project that
+     has not had the 2.22 SQL pasted. Such a chunk is held MO_RECHECK_MS and
+     sent again, and the current motion_put fills in the traces. A refusal
+     (400) gets the same answer again in this tab, so it waits for the next
+     visit, still in the database. Anything else, the network or the project,
+     stops the round and the next one tries again. */
   async function moSend() {
     if (MOTION.busy || MOTION.rec || !MOTION.queue.length) return;
     MOTION.busy = true;
-    let moved = false;
+    let stop = false, moved = false;
     try {
-      while (MOTION.queue.length && !MOTION.rec) {
-        const doc = MOTION.queue[0];
-        try { await lbCall('motion_put', { doc }); }
-        catch (err) { if (err.status !== 400) break; }
-        MOTION.queue = MOTION.queue.filter(c => c !== doc);
-        moved = true;
-      }
+      const now = Date.now();
+      const todo = MOTION.queue.filter(c => !(MOTION.hold.get(c.id) > now));
+      let i = 0;
+      const lane = async () => {
+        while (!stop && !MOTION.rec && i < todo.length) {
+          const doc = todo[i++];
+          let said;
+          try { said = await lbCall('motion_put', { doc }); }
+          catch (err) {
+            if (err.status === 400) { MOTION.hold.set(doc.id, Infinity); continue; }
+            stop = true;
+            return;
+          }
+          const sent = (doc.traces || []).length;
+          if (sent && !(said && said.traces >= sent)) {
+            MOTION.hold.set(doc.id, Date.now() + MO_RECHECK_MS);
+            continue;
+          }
+          await moDone(doc);
+          moved = true;
+        }
+      };
+      await Promise.all(Array.from({ length: MO_LANES }, lane));
     } finally {
       MOTION.busy = false;
-      if (moved) moKeep();
     }
+    /* Chunks cut while this round ran, the tail's among them, go now rather
+       than at the next tick, as long as this round was getting through. */
+    const now = Date.now();
+    if (moved && !stop && !MOTION.rec
+        && MOTION.queue.some(c => !(MOTION.hold.get(c.id) > now))) setTimeout(moSend, 500);
   }
 
-  setTimeout(moSend, 2000);
   setInterval(moSend, 20000);
+  addEventListener('online', () => moSend());
+  /* Leaving: the open chunk is cut, and the outbox goes into localStorage as
+     well, because a database write started now may not land before the page
+     is gone and a localStorage write is done before this returns. The next
+     visit reads both and keeps one copy of each. */
   addEventListener('pagehide', () => {
     if (MOTION.tail) moTailEnd();
-    if (!MOTION.rec) return;
-    moCut();
+    if (MOTION.rec) moCut();
+    moKeep();
   });
 
   /* ── 9. THE GUIDED RUN ────────────────────────────────
@@ -5879,6 +6006,22 @@
     body_jab: 'Jab to the body', overhand_rear: '{R} overhand',
     combo_1_2: '1-2', combo_1_2_3: '1-2-3', combo_4_5: '4-5'
   };
+
+  /* Which hand throws each punch, and what a combination is made of in the
+     order it is thrown. A lead punch is the left hand for an orthodox fighter
+     and the right for a southpaw. A switch hitter has no fixed lead, so nothing
+     is checked for one, and the recording says so by leaving `want` empty. */
+  const LEAD_T = ['jab', 'hook_lead', 'upper_lead', 'body_hook_lead', 'body_jab'];
+  const REAR_T = ['cross', 'hook_rear', 'upper_rear', 'body_hook_rear', 'overhand_rear'];
+  const COMBO_T = { combo_1_2: ['jab', 'cross'], combo_1_2_3: ['jab', 'cross', 'hook_lead'],
+                    combo_4_5: ['hook_rear', 'upper_lead'] };
+  function handFor(cls, stance) {
+    if (stance !== 'orthodox' && stance !== 'southpaw') return null;
+    const lead = stance === 'orthodox' ? 'left' : 'right';
+    if (LEAD_T.includes(cls)) return lead;
+    if (REAR_T.includes(cls)) return lead === 'left' ? 'right' : 'left';
+    return null;
+  }
 
   /* How long before the beat the ask cue goes out. It has to be over by the time
      the click lands, or the pilot is still being told what to throw while the
@@ -6370,6 +6513,22 @@
   function startRun() {
     if (!RUN.d || !RUN.d.guided) return;
     if (RUN.live) { endRun(); return; }
+    /* A drill with one wrap off records one hand, and the other hand's asks all
+       come back missed. Said once, on the first press, so a pilot who means to
+       go with one wrap presses again and goes. The one-minute drill is exempt:
+       it is the one that is meant to work with taps. */
+    const off = ['left', 'right'].filter(s => !(WRAPS[s] && WRAPS[s].device
+      && WRAPS[s].device.gatt && WRAPS[s].device.gatt.connected));
+    if (!RUN.d.test && off.length && RUN.gate !== off.join()) {
+      RUN.gate = off.join();
+      setMark(off.length === 2
+        ? 'No wraps are connected. Connect them first, or press Start again to go without them.'
+        : 'The ' + off[0] + ' wrap is not connected. Connect it, or press Start again to go '
+          + 'without it.', 'miss');
+      return;
+    }
+    RUN.gate = null;
+    RUN.stance = profile().stance;
     armAudio();
     RUN.live = true; RUN.done = false;
     /* The clock starts in the future, so elapsed time is negative through the
@@ -6681,10 +6840,30 @@
     /* The four things a punch can be, and which one it is decides whether it
        gets a label. This is the whole of the attribution rule in one place. */
     let type = null, outcome, reason = null, reaction = null;
+    let cls = null, want = null, pos = null;
 
     if (w) {
       reaction = Math.round(now - w.t0);
+      /* The punch this one would be if it counts: the ask's own type, or for a
+         combination the next punch in it. And the hand that throws that. */
       if (w.got < w.r.expect) {
+        const parts = COMBO_T[w.r.type];
+        cls = parts ? parts[w.got] || null : w.r.type;
+        want = handFor(cls, RUN.stance);
+        pos = w.got + 1;
+      }
+      const wrongHand = want && (src === 'left' || src === 'right') && src !== want;
+      if (wrongHand) {
+        /* The other wrap. Usually the guard hand moving as the asked-for punch
+           goes out, and it used to take the label: a cross filed as a jab, and
+           then the real jab turned away as one more than was asked for. The
+           window stays open for the hand that was asked. A tap or a key has no
+           hand, so the check is only ever about a wrap. */
+        outcome = 'unlabelled';
+        reason = 'wrong_hand';
+        RUN.stats.rejected++;
+        setMark('That was your ' + src + ' hand. Kept, not counted.', '');
+      } else if (w.got < w.r.expect) {
         /* Asked for, and here it is. */
         w.got++;
         w.seqs.push(RUN.punches);
@@ -6756,6 +6935,11 @@
       rep: w ? w.r.n + 1 : null,
       reaction: reaction,
       outcome: outcome, reason: reason,
+      /* What the open ask wanted from this punch: the class it would be (a jab
+         inside a 1-2, not the 1-2), the hand that throws it, and its place in
+         the window. Kept on a wrong-hand punch too, which is what makes one
+         readable afterwards. */
+      cls: cls, want: want, pos: pos,
       /* `score` keeps its name because the sink has a column called score and
          one that has held this number since the first upload. It is the same
          number the screens call power. `speed` is the new one, and it lands in
@@ -6876,10 +7060,14 @@
        answer it, and why it has no label when it has none, and it has rows for
        the asks nothing answered at all. A reader that only knows v1 would see a
        recording with the same shape and the wrong idea of what the labels mean,
-       so the number moves. */
+       so the number moves.
+
+       v3 (2026-10-01) moves it again for the same reason: a punch only takes an
+       ask's label from the hand that throws it, and every row says what the ask
+       wanted of it (cls, want, pos). A v2 "counted" can be the other hand. */
     const rts = RUN.rts.slice().sort((x, y) => x - y);
     return {
-      v: 2,
+      v: 3,
       id: RUN.id || newId(),
       pilot: PILOT ? { serial: PILOT.serial, gym: PILOT.gym, name: PILOT.name } : null,
       profile: p,
@@ -7356,8 +7544,11 @@
   }
   /* Anything a previous session could not send tries again on arrival, quietly.
      There is no screen for this and there should not be: the pilot is here to
-     train, and a recording from last week reaching the server is not news. */
+     train, and a recording from last week reaching the server is not news.
+     The same when the network comes back, so a gym with patchy signal does
+     not hold a drill until the next one is sent. */
   if (dest()) flushOutbox();
+  addEventListener('online', () => { if (dest()) flushOutbox(); });
 
   /* Rotating the phone. Both copies of the name were sized against a window
      that no longer exists, so both are refitted: the landed title on every
