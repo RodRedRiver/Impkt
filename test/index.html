@@ -2285,7 +2285,7 @@
     </section>
 
     <!-- ── THE PROGRAMME ───────────────────────────────────────────
-         Eight drills, twelve minutes each bar the one-minute test, and they are
+         Eight drills, five minutes each bar the one-minute test, and they are
          not a training plan. They are a labelled dataset being collected by a
          person instead of a rig, which is why they look the way they do:
 
@@ -3478,41 +3478,41 @@
       ]
     },
     {
-      n: '01', t: 'Straights, slow and clean', where: 'Shadow · 12 min',
+      n: '01', t: 'Straights, slow and clean', where: 'Shadow · 5 min',
       /* The one drill with a guided run built. secs is its exact length, and the
          fifth field on a block is its tempo in seconds, which is what the
          metronome and the on-the-beat feedback are driven from. A block without
          one is a block where nothing should be thrown. */
-      guided: true, secs: 720,
+      guided: true, secs: 300,
       why: 'The two punches that travel in a straight line, one at a time, on a '
          + 'tempo, in the air. This is the cleanest signal you will ever give us: '
          + 'no impact, no combination, nothing else happening in the window.',
       blocks: [
         ['0:00', 'Guard. Stand still and breathe. Do not throw anything.', 'idle', 'neg'],
-        ['1:00', '<b>Jab</b>, {l} hand. One every two seconds. First minute at a third of your power, second minute at two thirds, third minute flat out.', 'jab', '', 2],
-        ['4:00', 'Guard. Still.', 'idle', 'neg'],
-        ['4:30', '<b>Cross</b>, {r} hand. One every two seconds. Same three minutes, same order, a third then two thirds then everything.', 'cross', '', 2],
-        ['7:30', 'Guard. Still.', 'idle', 'neg'],
-        ['8:00', '<b>Jab, cross, jab, cross.</b> One punch every two seconds, all of it at about two thirds.', 'jab + cross', '', 2],
-        ['11:00', 'Guard. Still. Drill ends.', 'idle', 'neg']
+        ['0:25', '<b>Jab</b>, {l} hand. One every two seconds. The first third at a third of your power, the next at two thirds, the last flat out.', 'jab', '', 2],
+        ['1:40', 'Guard. Still.', 'idle', 'neg'],
+        ['1:55', '<b>Cross</b>, {r} hand. One every two seconds. Same again, same order, a third then two thirds then everything.', 'cross', '', 2],
+        ['3:10', 'Guard. Still.', 'idle', 'neg'],
+        ['3:20', '<b>Jab, cross, jab, cross.</b> One punch every two seconds, all of it at about two thirds.', 'jab + cross', '', 2],
+        ['4:35', 'Guard. Still. Drill ends.', 'idle', 'neg']
       ]
     },
     {
-      n: '02', t: 'Bent arms, slow and clean', where: 'Shadow · 12 min',
-      guided: true, secs: 720,
+      n: '02', t: 'Bent arms, slow and clean', where: 'Shadow · 5 min',
+      guided: true, secs: 300,
       why: 'The four punches that come round or up. These are the ones a classifier '
          + 'confuses with each other, so they get the same isolation treatment and a '
          + 'slightly slower tempo. A hook thrown every two seconds is a hook thrown badly.',
       blocks: [
         ['0:00', 'Guard. Still.', 'idle', 'neg'],
-        ['0:30', '<b>{L} hook.</b> One every two and a half seconds. A third, then two thirds, then everything.', 'hook_lead', '', 2.5],
-        ['3:00', 'Guard. Still.', 'idle', 'neg'],
-        ['3:30', '<b>{R} hook.</b> Same tempo, same three intensities.', 'hook_rear', '', 2.5],
-        ['6:00', 'Guard. Still.', 'idle', 'neg'],
-        ['6:30', '<b>{L} uppercut.</b> One every two and a half seconds. Drop the shoulder, do not lean.', 'upper_lead', '', 2.5],
-        ['8:45', 'Guard. Still.', 'idle', 'neg'],
-        ['9:15', '<b>{R} uppercut.</b> Same again.', 'upper_rear', '', 2.5],
-        ['11:30', 'Guard. Still. Drill ends.', 'idle', 'neg']
+        ['0:15', '<b>{L} hook.</b> One every two and a half seconds. A third, then two thirds, then everything.', 'hook_lead', '', 2.5],
+        ['1:20', 'Guard. Still.', 'idle', 'neg'],
+        ['1:30', '<b>{R} hook.</b> Same tempo, same three intensities.', 'hook_rear', '', 2.5],
+        ['2:35', 'Guard. Still.', 'idle', 'neg'],
+        ['2:45', '<b>{L} uppercut.</b> One every two and a half seconds. Drop the shoulder, do not lean.', 'upper_lead', '', 2.5],
+        ['3:40', 'Guard. Still.', 'idle', 'neg'],
+        ['3:50', '<b>{R} uppercut.</b> Same again.', 'upper_rear', '', 2.5],
+        ['4:45', 'Guard. Still. Drill ends.', 'idle', 'neg']
       ]
     },
     hundred('03', '100 jabs', 'jab', 'Jab', '{l}', 2,
@@ -3549,26 +3549,26 @@
       'The {r} overhand loops over the top and comes down, which no other punch here '
       + 'does. On the bag, aim where the head would be.'),
     {
-      n: '13', t: 'The same six, into the bag', where: 'Heavy bag · 12 min',
-      guided: true, secs: 720,
+      n: '13', t: 'The same six, into the bag', where: 'Heavy bag · 5 min',
+      guided: true, secs: 300,
       why: 'Every punch from the first two drills again, this time hitting something. '
          + 'The deceleration at contact is the loudest thing in the whole signal, and a '
          + 'model that has only ever seen punches with it cannot find one without it, '
          + 'which is most of what happens in a gym.',
       blocks: [
         ['0:00', 'Stand at the bag with both hands resting on it. No punches.', 'idle', 'neg'],
-        ['1:00', '<b>Jab</b> into the bag. One every three seconds, hard but clean. Reset your guard between each one.', 'jab', 'hit', 3],
-        ['2:40', '<b>Cross</b> into the bag. One every three seconds.', 'cross', 'hit', 3],
-        ['4:20', '<b>{L} hook</b> into the bag. One every three seconds.', 'hook_lead', 'hit', 3],
-        ['6:00', '<b>{R} hook</b> into the bag.', 'hook_rear', 'hit', 3],
-        ['7:40', '<b>{L} uppercut</b> into the bag.', 'upper_lead', 'hit', 3],
-        ['9:20', '<b>{R} uppercut</b> into the bag.', 'upper_rear', 'hit', 3],
-        ['11:00', 'Guard in front of the bag. Do not touch it. Drill ends.', 'idle', 'neg']
+        ['0:25', '<b>Jab</b> into the bag. One every three seconds, hard but clean. Reset your guard between each one.', 'jab', 'hit', 3],
+        ['1:05', '<b>Cross</b> into the bag. One every three seconds.', 'cross', 'hit', 3],
+        ['1:45', '<b>{L} hook</b> into the bag. One every three seconds.', 'hook_lead', 'hit', 3],
+        ['2:30', '<b>{R} hook</b> into the bag.', 'hook_rear', 'hit', 3],
+        ['3:10', '<b>{L} uppercut</b> into the bag.', 'upper_lead', 'hit', 3],
+        ['3:50', '<b>{R} uppercut</b> into the bag.', 'upper_rear', 'hit', 3],
+        ['4:35', 'Guard in front of the bag. Do not touch it. Drill ends.', 'idle', 'neg']
       ]
     },
     {
-      n: '14', t: 'Combinations', where: 'Shadow and bag · 12 min',
-      guided: true, secs: 720,
+      n: '14', t: 'Combinations', where: 'Shadow and bag · 5 min',
+      guided: true, secs: 300,
       why: 'Punches do not arrive one at a time with three seconds of quiet around '
          + 'them. This drill is where the wraps learn what a second punch looks like '
          + 'when it starts before the first has finished. The same pair in the air '
@@ -3579,63 +3579,63 @@
            combination being scored as four missed jabs: the window opens once
            per pair and closes when the pair is in, and the second punch of a
            1-2 is expected rather than rejected as a stray. */
-        ['0:30', '<b>1-2</b>, jab then cross, in the air. One pair every four seconds. Back to guard between pairs.', 'combo_1_2', '', 4, 2],
-        ['3:30', '<b>1-2</b> into the bag. One pair every four seconds.', 'combo_1_2', 'hit', 4, 2],
-        ['6:30', '<b>1-2-3</b>, jab, cross, {l} hook, into the bag. One every five seconds.', 'combo_1_2_3', 'hit', 5, 3],
-        ['8:30', '<b>4-5</b>, {r} hook then {l} uppercut, into the bag. One every five seconds.', 'combo_4_5', 'hit', 5, 2],
-        ['10:00', 'Anything you like. Two to four punches, one combination every six seconds, into the bag. Do not repeat the same one twice in a row.', 'combo_free', 'hit'],
-        ['11:30', 'Guard. Still. Drill ends.', 'idle', 'neg']
+        ['0:15', '<b>1-2</b>, jab then cross, in the air. One pair every four seconds. Back to guard between pairs.', 'combo_1_2', '', 4, 2],
+        ['1:30', '<b>1-2</b> into the bag. One pair every four seconds.', 'combo_1_2', 'hit', 4, 2],
+        ['2:45', '<b>1-2-3</b>, jab, cross, {l} hook, into the bag. One every five seconds.', 'combo_1_2_3', 'hit', 5, 3],
+        ['3:35', '<b>4-5</b>, {r} hook then {l} uppercut, into the bag. One every five seconds.', 'combo_4_5', 'hit', 5, 2],
+        ['4:15', 'Anything you like. Two to four punches, one combination every six seconds, into the bag. Do not repeat the same one twice in a row.', 'combo_free', 'hit'],
+        ['4:50', 'Guard. Still. Drill ends.', 'idle', 'neg']
       ]
     },
     {
-      n: '15', t: 'Everything that is not a punch', where: 'Shadow and rope · 12 min',
+      n: '15', t: 'Everything that is not a punch', where: 'Shadow and rope · 5 min',
       /* Guided, with no rep windows anywhere in it, and that is not an omission:
          nothing in this drill should be prompted, because a prompt is a request
-         for a punch and every block in here is twelve minutes of asking for
+         for a punch and every block in here is five minutes of asking for
          something that must never be counted as one. What the guided run gives
          it is the clock, the block cues and the ten-second warnings, which is
          exactly what it needs and nothing more. */
-      guided: true, secs: 720,
-      why: 'The most valuable twelve minutes in the programme and the least like '
+      guided: true, secs: 300,
+      why: 'The most valuable five minutes in the programme and the least like '
          + 'training. Everything in here is something the wraps will be tempted to '
          + 'count as a punch, and the only way they learn not to is to be shown each '
-         + 'one and told it is not. The block at 8:40 is the one that matters most: a '
+         + 'one and told it is not. The block at 3:35 is the one that matters most: a '
          + 'resting hand still feels your whole body turn when the other one works, '
          + 'and that is the false positive it is most prone to.',
       blocks: [
         ['0:00', 'Guard. Still.', 'idle', 'neg'],
-        ['0:40', 'Footwork only. In, out, side to side, pivot. Hands stay in guard the whole time.', 'footwork', 'neg'],
-        ['2:20', 'Slips, rolls and ducks. Move your head, not your hands.', 'defence', 'neg'],
-        ['4:00', '<b>Paw the jab.</b> Arm goes out and comes straight back with nothing behind it. Never commit. This is the hardest one for us to get right.', 'feint', 'neg'],
-        ['5:40', 'Catch and parry, as though someone is jabbing at you.', 'parry', 'neg'],
-        ['7:00', 'Skip rope. Normal skipping, both feet.', 'rope', 'neg'],
-        ['8:40', '<b>{L} hand stays in guard and does nothing.</b> Throw with your {r} hand only, as hard as you like, one punch every three seconds. Then swap: {r} hand still, {l} hand working.', 'other_hand', 'neg'],
-        ['10:40', 'Fidget. Adjust a wrap, wipe your face, take a drink, retie a lace, pick your phone up and put it down. Drill ends.', 'noise', 'neg']
+        ['0:15', 'Footwork only. In, out, side to side, pivot. Hands stay in guard the whole time.', 'footwork', 'neg'],
+        ['0:55', 'Slips, rolls and ducks. Move your head, not your hands.', 'defence', 'neg'],
+        ['1:40', '<b>Paw the jab.</b> Arm goes out and comes straight back with nothing behind it. Never commit. This is the hardest one for us to get right.', 'feint', 'neg'],
+        ['2:20', 'Catch and parry, as though someone is jabbing at you.', 'parry', 'neg'],
+        ['2:55', 'Skip rope. Normal skipping, both feet.', 'rope', 'neg'],
+        ['3:35', '<b>{L} hand stays in guard and does nothing.</b> Throw with your {r} hand only, as hard as you like, one punch every three seconds. Then swap: {r} hand still, {l} hand working.', 'other_hand', 'neg'],
+        ['4:30', 'Fidget. Adjust a wrap, wipe your face, take a drink, retie a lace, pick your phone up and put it down. Drill ends.', 'noise', 'neg']
       ]
     },
     {
-      n: '16', t: 'Open rounds, held back', where: 'Heavy bag · 12 min',
+      n: '16', t: 'Open rounds, held back', where: 'Heavy bag · 5 min',
       /* rounds turns the three work blocks into rounds proper: a bell at each
          end of them and the ten-second warning inside them, which is the one
          set of cues every boxer already knows and does not have to be taught by
          a screen. Nothing is prompted and nothing is labelled, which is the
          whole point of the drill being held back. */
-      guided: true, secs: 720, rounds: true,
-      why: 'Three normal rounds on the bag, nothing called, no tempo. This one is '
+      guided: true, secs: 300, rounds: true,
+      why: 'Three short rounds on the bag, nothing called, no tempo. This one is '
          + 'never used to train anything: it is kept aside and used to check whether '
          + 'what the other drills taught actually works on a real round. A score '
          + 'measured on data a model was trained on is not a score.',
       blocks: [
         ['0:00', 'Guard. Still. Start the recording before you start the round.', 'idle', 'neg'],
-        ['1:00', '<b>Round one.</b> Three minutes on the bag exactly as you normally would. Nothing prescribed.', 'held_back', 'hit'],
-        ['4:00', 'Rest. Move around, do not throw.', 'idle', 'neg'],
-        ['5:00', '<b>Round two.</b> Three minutes.', 'held_back', 'hit'],
-        ['8:00', 'Rest.', 'idle', 'neg'],
-        ['9:00', '<b>Round three.</b> Three minutes. Drill ends.', 'held_back', 'hit']
+        ['0:20', '<b>Round one.</b> Eighty seconds on the bag exactly as you normally would. Nothing prescribed.', 'held_back', 'hit'],
+        ['1:40', 'Rest. Move around, do not throw.', 'idle', 'neg'],
+        ['2:00', '<b>Round two.</b> Eighty seconds.', 'held_back', 'hit'],
+        ['3:20', 'Rest.', 'idle', 'neg'],
+        ['3:40', '<b>Round three.</b> Eighty seconds. Drill ends.', 'held_back', 'hit']
       ]
     },
     {
-      n: '17', t: 'The same punches, tired', where: 'Heavy bag · 12 min',
+      n: '17', t: 'The same punches, tired', where: 'Heavy bag · 5 min',
       /* The one drill whose work blocks are not the point. The three flat-out
          blocks are collected, because they are punches into a bag and there is no
          reason to throw data away, but they are labelled free: nothing in them is
@@ -3646,7 +3646,7 @@
          read as a closing block like every other drill's. They are not: somebody
          out of breath with their hands down is a negative no other drill in here
          collects, because nobody in the other seven is out of breath. */
-      guided: true, secs: 720,
+      guided: true, secs: 300,
       why: 'Every punch in the other drills is thrown by somebody rested, '
          + 'because each one starts from zero and has a guard block whenever it '
          + 'needs one. Almost nothing in a gym is. A tired jab is shorter, slower '
@@ -3657,15 +3657,15 @@
          + 'worth having.',
       blocks: [
         ['0:00', 'Guard. Still. Breathe.', 'idle', 'neg'],
-        ['0:30', '<b>Flat out</b> on the bag for two minutes. Anything you like, as hard as you like, and do not pace yourself. This block is not being asked for anything: it is here to make you tired.', 'free_hard', 'hit'],
-        ['2:30', '<b>Jab</b> into the bag, {l} hand. One every three seconds. No rest first, and do not wait to get your breath back.', 'jab', 'hit', 3],
-        ['3:50', '<b>Cross</b> into the bag, {r} hand. One every three seconds. Still no rest.', 'cross', 'hit', 3],
-        ['5:10', '<b>Flat out</b> again, two minutes. Harder than the first one if there is anything left.', 'free_hard', 'hit'],
-        ['7:10', '<b>{L} hook</b> into the bag. One every three seconds, straight off the back of that.', 'hook_lead', 'hit', 3],
-        ['8:25', '<b>{R} hook</b> into the bag. Same tempo.', 'hook_rear', 'hit', 3],
-        ['9:40', '<b>Flat out</b>, one last minute. Everything you have.', 'free_hard', 'hit'],
-        ['10:40', '<b>Jab</b> into the bag, one every three seconds, for a full minute. Miss the beat rather than stopping, and let them be as bad as they are.', 'jab', 'hit', 3],
-        ['11:40', 'Hands down. Stand still and get your breath back. Drill ends.', 'idle', 'neg']
+        ['0:10', '<b>Flat out</b> on the bag for fifty seconds. Anything you like, as hard as you like, and do not pace yourself. This block is not being asked for anything: it is here to make you tired.', 'free_hard', 'hit'],
+        ['1:00', '<b>Jab</b> into the bag, {l} hand. One every three seconds. No rest first, and do not wait to get your breath back.', 'jab', 'hit', 3],
+        ['1:35', '<b>Cross</b> into the bag, {r} hand. One every three seconds. Still no rest.', 'cross', 'hit', 3],
+        ['2:10', '<b>Flat out</b> again, fifty seconds. Harder than the first one if there is anything left.', 'free_hard', 'hit'],
+        ['3:00', '<b>{L} hook</b> into the bag. One every three seconds, straight off the back of that.', 'hook_lead', 'hit', 3],
+        ['3:30', '<b>{R} hook</b> into the bag. Same tempo.', 'hook_rear', 'hit', 3],
+        ['4:00', '<b>Flat out</b>, one last twenty seconds. Everything you have.', 'free_hard', 'hit'],
+        ['4:20', '<b>Jab</b> into the bag, one every three seconds, for twenty seconds. Miss the beat rather than stopping, and let them be as bad as they are.', 'jab', 'hit', 3],
+        ['4:40', 'Hands down. Stand still and get your breath back. Drill ends.', 'idle', 'neg']
       ]
     }
 
@@ -3802,14 +3802,14 @@
          is the only way. Saying both would send half the readers looking for
          something that is not there. */
       note.textContent = 'Connect a wrap first. The drills are how the wraps '
-        + 'learn your punches, so one run with nothing on your wrists is twelve '
+        + 'learn your punches, so one run with nothing on your wrists is five '
         + 'minutes that recorded nothing. ' + (IN_APP
           ? 'Connect on the Devices tab.'
           : 'Connect in the panel beside these drills.');
     } else if (on === 1) {
       note.textContent = 'One wrap is connected. The drill will run, and the hand '
         + 'without a wrap on it records nothing, so the pair is worth the extra '
-        + 'minute before a twelve minute drill.';
+        + 'minute before a five minute drill.';
     }
   }
 
