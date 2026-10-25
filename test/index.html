@@ -2052,6 +2052,221 @@
     html.in-app #drills .setup-note { display: none; }
     html.in-app .prog { grid-template-columns: minmax(0, 1fr); max-width: 820px; }
     html.in-app .prog-main { grid-column: 1; grid-row: 1; }
+
+    /* ── THE TRAIN THEME ────────────────────────────────────────
+       The whole page, every screen, in the look of the app's Train screen as
+       it ships today (impkt-ios beta/src/routes/index.tsx and styles.css,
+       .train-light-shell): a pearl-white ground lit by two slow white blooms,
+       frosted white panels with a bright rim, cool slate ink, a light serif
+       wordmark spaced wide, a metallic display title, and a white pill for the
+       primary action that breathes. Crimson stays the one colour, used for
+       the small things: the drill number, a tick, a focus ring.
+
+       It sits last and on top of everything above it, so the flat pass and
+       THE DRILLS ARE GLASS are still in this file underneath. Taking this one
+       block out is the whole revert. The values are the app's, copied rather
+       than approximated, so the website and the app are one screen. */
+    :root {
+      --t-ink:   oklch(0.22 0.008 255);
+      --t-mute:  oklch(0.5 0.008 255);
+      --t-line:  oklch(0.82 0.008 255 / 0.55);
+      --t-red:   oklch(0.505 0.198 18);
+      --t-panel: rgba(255,255,255,0.58);
+      --t-rim:   rgba(255,255,255,0.95);
+      --t-shadow: 0 14px 38px -24px rgba(45,51,61,0.38),
+                  inset 0 1px 0 #fff, inset 0 -1px 0 rgba(133,140,152,0.08);
+
+      --carbon: var(--t-ink);
+      --ash:    var(--t-mute);
+      --hair:   var(--t-line);
+      --hairline: var(--t-line);
+      --pebble: oklch(0.9 0.008 255);
+      --frost:  oklch(0.97 0.005 255);
+      --glass:  var(--t-panel);
+      --glass-brd: var(--t-rim);
+      --r-s: 14px; --r: 16px; --r-l: 22px; --r-xl: 28px;
+    }
+
+    /* The ground, fixed, so the screens move over it and it never scrolls. */
+    body {
+      background: linear-gradient(180deg, #fff 0%, oklch(0.98 0.004 255) 52%,
+                                  oklch(0.95 0.008 255) 100%) fixed;
+      color: var(--t-ink);
+    }
+    .depth, .bloom, body.room .ambient { display: none; }
+    .pearls { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .pearls i { position: absolute; display: block; border-radius: 50%; }
+    .pearls i:nth-child(1) {
+      left: -24%; top: -14%; width: 82%; height: 62%; filter: blur(40px);
+      background: radial-gradient(closest-side, oklch(1 0 0 / 0.98),
+                  oklch(0.92 0.012 255 / 0.48) 52%, transparent 74%);
+      animation: t-pearl 16s ease-in-out infinite;
+    }
+    .pearls i:nth-child(2) {
+      right: -28%; top: 24%; width: 72%; height: 56%; filter: blur(64px);
+      background: radial-gradient(closest-side, oklch(1 0 0 / 0.96),
+                  oklch(0.89 0.018 255 / 0.36) 55%, transparent 74%);
+      animation: t-pearl 16s ease-in-out -8s infinite;
+    }
+    .pearls i:nth-child(3) {
+      inset: 0; border-radius: 0;
+      background: linear-gradient(115deg, oklch(1 0 0 / 0.7), transparent 38%,
+                  oklch(1 0 0 / 0.44) 68%, transparent);
+    }
+    @keyframes t-pearl {
+      0%, 100% { transform: translate3d(-4%, -2%, 0) scale(1); opacity: 0.62; }
+      50% { transform: translate3d(8%, 5%, 0) scale(1.12); opacity: 0.9; }
+    }
+
+    /* The wordmark: no bolt, a light serif in caps at half an em apart. */
+    .mark {
+      font-family: "New York", ui-serif, Georgia, "Times New Roman", serif;
+      font-size: 13px; font-weight: 300; letter-spacing: 0.5em;
+      color: color-mix(in oklch, var(--t-ink) 70%, transparent);
+    }
+    .mark svg { display: none; }
+
+    /* Small caps labels, the app's "TRAIN" in the header. */
+    .eyebrow, .grp-lbl, .lb-table-t {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.28em;
+      text-transform: uppercase; color: var(--t-mute);
+    }
+
+    /* Display type is the app's metal: a slate ramp clipped to the letters. */
+    .h-display, .train-title {
+      background-image: linear-gradient(180deg, oklch(0.34 0.008 255) 8%,
+        oklch(0.56 0.012 255) 45%, oklch(0.78 0.01 255) 72%, oklch(0.48 0.012 255) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .train-title {
+      margin: 4px 0 18px; text-align: center;
+      font-size: 60px; font-weight: 700; line-height: 1; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.9);
+    }
+    @media (prefers-contrast: more) {
+      .h-display, .train-title { background: none; color: var(--t-ink); text-shadow: none; }
+    }
+
+    /* Every panel on every screen is the app's frosted card. */
+    .glass, #drills .glass {
+      background-color: var(--t-panel); background-image: none;
+      border: 1px solid var(--t-rim);
+      -webkit-backdrop-filter: blur(30px) saturate(1.8);
+      backdrop-filter: blur(30px) saturate(1.8);
+      box-shadow: var(--t-shadow);
+    }
+    #drills.entering .glass, #drills.leaving .glass,
+    .pane.entering .glass, .pane.leaving .glass {
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .card, #drills .dcard, .lb, .getapp { border-radius: 16px; }
+    #drills .connect { border-radius: 22px; }
+    #drills .dcard { transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s cubic-bezier(0.22, 1.2, 0.36, 1); }
+    #drills .dcard:hover { background-color: rgba(255,255,255,0.82);
+      box-shadow: 0 18px 42px -22px rgba(45,51,61,0.42), inset 0 1px 0 #fff; }
+    #drills .dcard:active { transform: scale(0.975); }
+    #drills .dcard-ico { border-radius: 12px; background: #fff;
+      box-shadow: 0 8px 24px -14px rgba(36,42,52,0.35), inset 0 1px 0 #fff; }
+    .drill-lock, #drills .drill-lock {
+      background: rgba(255,255,255,0.62); border: 1px solid var(--t-rim);
+      color: color-mix(in oklch, var(--t-ink) 75%, transparent);
+      box-shadow: 0 12px 30px -18px rgba(44,50,60,0.4), inset 0 1px 0 #fff;
+      -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
+      border-radius: 16px;
+    }
+    .wrap + .wrap { border-top-color: var(--t-line); }
+
+    /* The primary action is the app's Start Session: a white pill with a
+       gloss across its top half, bold caps, and a slow white pulse. */
+    .btn-glass {
+      position: relative; overflow: hidden; isolation: isolate;
+      min-height: 56px; padding: 0 28px;
+      background: rgba(255,255,255,0.76); border: 1px solid #fff;
+      color: color-mix(in oklch, var(--t-ink) 80%, transparent);
+      font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      -webkit-backdrop-filter: blur(30px); backdrop-filter: blur(30px);
+      animation: t-pulse 3.6s ease-in-out infinite;
+      transition: transform 0.3s cubic-bezier(0.22, 1.2, 0.36, 1), background 0.3s;
+    }
+    .btn-glass::before {
+      content: ""; position: absolute; z-index: -1; pointer-events: none;
+      left: 8px; right: 8px; top: 2px; height: 46%; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.12));
+    }
+    .btn-glass:hover:not(:disabled) { background: rgba(255,255,255,0.95); transform: scale(1.015); }
+    .btn-glass:active { transform: scale(0.975); }
+    @keyframes t-pulse {
+      0%, 100% { box-shadow: 0 18px 48px -28px oklch(0.42 0.01 250 / 0.28), 0 0 0 1px oklch(1 0 0 / 0.9) inset; }
+      50% { box-shadow: 0 22px 58px -26px oklch(0.42 0.01 250 / 0.4), 0 0 0 1px oklch(1 0 0) inset; }
+    }
+
+    /* Everything else you press is the app's glass chip. */
+    .btn-plain, .wrap-btn, .lb-link, .lb-drop {
+      background: rgba(255,255,255,0.62); border: 1px solid var(--t-rim);
+      color: color-mix(in oklch, var(--t-ink) 72%, transparent);
+      font-weight: 500;
+      box-shadow: 0 12px 30px -18px rgba(44,50,60,0.4), inset 0 1px 0 #fff;
+      -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
+    }
+    .btn-plain:hover, .wrap-btn:hover, .lb-link:hover, .lb-drop:hover {
+      background: rgba(255,255,255,0.82); color: var(--t-ink);
+      box-shadow: 0 14px 34px -16px rgba(44,50,60,0.42), inset 0 1px 0 #fff;
+    }
+    .btn-plain:disabled { opacity: 0.55; }
+
+    /* A drill card's own button is the app's white chip at card size, and the
+       drill number keeps the crimson so a card still has its one red mark. */
+    .dcard-go, .dcard-go.quiet {
+      background: rgba(255,255,255,0.76); border: 1px solid #fff;
+      color: color-mix(in oklch, var(--t-ink) 80%, transparent);
+      font-weight: 600;
+      box-shadow: 0 10px 26px -16px rgba(44,50,60,0.42), inset 0 1px 0 #fff;
+    }
+    .dcard-go:hover, .dcard-go.quiet:hover {
+      background: rgba(255,255,255,0.95); color: var(--t-ink);
+    }
+
+    /* Notices are the app's: a frosted slip with quiet type, not a red box. */
+    .lb-band {
+      background: rgba(255,255,255,0.58); border: 1px solid var(--t-rim);
+      border-radius: 16px; color: var(--t-mute); text-align: center;
+      box-shadow: 0 12px 30px -22px rgba(40,45,55,0.35), inset 0 1px 0 #fff;
+    }
+
+    /* Fields are frosted too, with the ring on focus rather than a border. */
+    .field, .code-field {
+      background: var(--t-panel); border: 1px solid var(--t-rim);
+      border-radius: 16px; color: var(--t-ink);
+      box-shadow: 0 10px 28px -22px rgba(52,58,70,0.38), inset 0 1px 0 #fff;
+    }
+    .code-field:hover { border-color: #fff; }
+    .code-field::placeholder, .field::placeholder { color: oklch(0.72 0.008 255); }
+    .code-field:focus, .field:focus { background: rgba(255,255,255,0.82); }
+
+    /* The segmented controls sit in a frosted trough. */
+    .tabs { background: rgba(255,255,255,0.5); border: 1px solid var(--t-rim);
+      box-shadow: inset 0 1px 0 #fff; }
+    .tabs input:checked + label { background: rgba(255,255,255,0.9); color: var(--t-ink);
+      box-shadow: 0 5px 16px -8px oklch(0.35 0.01 250 / 0.3); }
+
+    /* Focus, the app's: three pixels of crimson, three pixels off. */
+    a:focus-visible, button:focus-visible, input:focus-visible,
+    .tabs input:focus-visible + label, .code-field:focus, .field:focus {
+      outline: 3px solid var(--t-red); outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pearls i, .btn-glass { animation: none; }
+    }
+    /* Asked for less glass: the panels go opaque and the blooms go. */
+    @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+      .pearls { display: none; }
+      .glass, #drills .glass, .btn-glass, .btn-plain, .field, .code-field, .drill-lock {
+        background-color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none;
+        border-color: var(--t-line);
+      }
+    }
   </style>
 </head>
 <body>
@@ -2060,6 +2275,7 @@
   <div class="depth" aria-hidden="true"></div>
   <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="bloom" id="bloom" aria-hidden="true"></div>
+  <div class="pearls" aria-hidden="true"><i></i><i></i><i></i></div>
 
   <!-- The mark is a link back to the marketing site, which is the only
        navigation this domain has or needs. -->
@@ -2322,6 +2538,7 @@
     <section class="pane" id="drills" tabindex="-1" hidden aria-label="Your drills">
       <div class="prog">
         <div class="prog-main">
+          <p class="train-title" aria-hidden="true">Train</p>
           <!-- No heading and no standfirst. There was a "Your programme." over a
                paragraph explaining what the eight cards are for, and the cards
                say it: each one carries its own title, where it is done and how
